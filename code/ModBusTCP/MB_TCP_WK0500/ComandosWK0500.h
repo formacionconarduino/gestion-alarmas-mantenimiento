@@ -1,6 +1,6 @@
 
 //*******************definici�n del c�digo de los comandos Winkhel
-enum Comando{
+enum {
        CMD_ACT_ELE= 0x20,  //ACTIVAR ELEMENTO
        CMD_DES_ELE,    //DESACTIVAR ELEMENTO
        CMD_ACT_GRP,    //ACTIVAR GRUPO
@@ -49,11 +49,9 @@ enum Comando{
 */
 byte buscarElemento(int id_elemento)
 {
-int p;  
-for(p = HR_INFO ;  p <= HR_POTIN_ID ; p += 5) //la entrada anal�gica auxiliar la analizo por separado
-   if(regs[p] == id_elemento)return p; // si lo encuentra devuelve posici�n
-   if(regs[HR_AINAUX_ID] == id_elemento) return HR_AINAUX_ID;//esto es porque los elementos analógicos usan más bytes
-   return 0;//NO lo ha encontrado
+/*buscar en la EEPROM ???? del WK0500el identificador del elemento para saber en que remoto está y 
+redireccionarle el comando recibido
+*/
 }  
 
 byte posicion; //registro HR donde est�n los datos para ese elemento
@@ -65,20 +63,16 @@ void ComandoError(){
 void ActivarElemento(){
 //Serial.print("ACTIVAR ELEMENTO: ");
 
-posicion=buscarElemento(regs[HR_ARG1]);
-//en regs[HR_ARG1] est�n los 2 bytes de Id_elemento
-if(posicion==HR_RELE1_ID || posicion==HR_RELE2_ID || posicion==HR_RELE3_ID || posicion==HR_RELE4_ID)
-    regs[posicion + OFFSET_VESC] |=1;//ponemos un 1 en la escena cero(dejando los otros valores de escena) que es la que se activar� al final
+/*hay que determinar el número de remoto en el que está el elemento
+**y mandarle orden de activación*/
       
  
 }
 //--------------------------------------------------
 void DesactivarElemento(){
 //Serial.print("DESACTIVAR ELEMENTO: ");
-posicion=buscarElemento(regs[HR_ARG1]);
-//en regs[HR_ARG1] est�n los 2 bytes de Id_elemento
-if(posicion==HR_RELE1_ID || posicion==HR_RELE2_ID || posicion==HR_RELE3_ID || posicion==HR_RELE4_ID)
-      regs[posicion + OFFSET_VESC] &=0xFFFE;//ponemos un 0 en la escena cero(dejando los otros valores de escena) que es la que se activar� al final
+/*hay que determinar el número de remoto en el que está el elemento
+**y mandarle orden de desactivación*/
 }
 //--------------------------------------------------
 void ActivarGrupo(){

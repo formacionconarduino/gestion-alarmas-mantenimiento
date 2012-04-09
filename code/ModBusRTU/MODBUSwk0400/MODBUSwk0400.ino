@@ -1,5 +1,5 @@
 /* 		
- Modbus over serial line - RTU Slave Arduino para módulo WK0100 
+ Modbus over serial line - RTU Slave Arduino para módulo WK0400 
  Basado en los trabajos de:
  Juan Pablo Zometa : jpmzometa@gmail.com  http://sites.google.com/site/jpmzometa/
  Samuel Marco: sammarcoarmengol@gmail.com  and Andras Tucsni.
@@ -15,7 +15,7 @@
  *************************************************************************/
 #include <EEPROM.h>  //para las operaciones de lectura y escritura en la EEPROM
 //al final tengo otro #include para las librerias ModBus Slave
-#include "HRWK0100.h"
+#include "HRWK0400.h"
 
 #define DirDefectoMB 18 //uso define en lugar de const para ahorrar espacio en cualquier sitio
 unsigned char DirMB =1;// EEPROM.read (EP_DirMB);//DE MOMENTO LA DIRECCIÓN VALE 1
@@ -27,14 +27,13 @@ unsigned long tprev ;           //* previous time*/
 boolean primerCiclo;       //
 int update_mb_slave(unsigned char slave, int *regs,unsigned int regs_size) ;//prototipo de función, es porque el #include lo tengo abajo
 void configure_mb_slave(long baud, char parity, char txenpin);//prototipo de función
-int memoria;
+byte memoria=HIGH;//quitar
 void setup() //------------------------------------------------------------------------OK
 {
-        int pin;
+        int pin;  
         configure_mb_slave(COMM_BPS, PARITY, 0);//*cuando ponga varios módulos poner un 3 EN LUGAR DE 0
         primerCiclo=true;  //para determinar cuando se reinicia, se usa en la función TiempoCiclo()
-        for( pin=DIN1; pin <= DIN3; pin++) //LIMITE SUPERIOR HAY QUE CAMBIAR
-                 pinMode(pin, pinIO[pin]); //inicializa modo de cada pin definido en HRWK0100.h
+        for( pin=DIN1; pin <= AINAUX; pin++) pinMode(pin, pinIO[pin]); //inicializa modo de cada pin definido en HRWK0400.h
         if (DirMB >246 || DirMB <1 ){//LO DEL 246 HAY QUE VERIFICARLO
             DirMB=DirDefectoMB; //asigno valor si no era correcto
             //EEPROM.write (EP_DirMB,DirMB); //DE MOMENTO NO ESCRIBIR EN LA EEPROM
@@ -56,12 +55,22 @@ void InicializaElementos()//----------------------------------------------------
   //Esta función simplemente copiaría los datos de la EEPROM en la zona de los HR
   //de los elementos
   
-        
+  //relación de tipos de elementos
+  enum{ALUMBRADO,ENCHUFE, //esto se podría incluir en HRW0400.h 
+       S_GAS=8, S_PRESENCIA,INTERRUPTOR,//la tontería del 8 es por poner unos de entrada y otros de salida y que estos sean del 8 al 15
+       TIPO=16
+      };  
+  //relación de escenas
+  enum{ ESCENA0=1,ESCENA1=2,  //también se puede incluir en  HRW0400.h 
+        ESCENA2=4, INCENDIO=8, NOCHE=16 //esto es por ser creativo en los nombres de las escenas    
+        //LOS VALORES ASIGNADOS SON PARA FACILITAR EL CODIGO POSTERIOR
+      };
+      
   //Ahora para poder simularlo escribo directamente en los HR unos cuantos elementos inventados       
         regs[HR_RELE1_ID]=1001; //identificador de elemento
         regs[HR_RELE1_ID+1]=ALUMBRADO*TIPO + RELE1; //contiene el tipo + la salida, es un entero pero sólo uso 1 byte, se tendrían que
                                                    //modificar las especificaciones y tener hasta 256 tipos de elementos y 256 I/0 de
-                                                   //hecho en el WK0100 el RELE4 es la salida 16 y AINAUX la 17, no vale con 4 bits
+                                                   //hecho en el WK0400 el RELE4 es la salida 16 y AINAUX la 17, no vale con 4 bits
                                                    //aunque creo que la información de la salida es redundante, sirve para facilitar 
                                                    //las consultas al maestro WK0500
         regs[HR_RELE1_ID+2]= ESCENA0+INCENDIO+NOCHE;          //escenas en las que participa RELÉ1 
@@ -72,10 +81,10 @@ void InicializaElementos()//----------------------------------------------------
         regs[HR_RELE2_ID+2]=ESCENA0+INCENDIO;
         regs[HR_RELE2_ID+3]=ESCENA0*HIGH + INCENDIO*LOW  ;   
   
-        regs[HR_DIN1_ID]=2012; 
-        regs[HR_DIN1_ID+1]=INTERRUPTOR*TIPO + DIN1; 
-        regs[HR_DIN1_ID+2]=ESCENA0+NOCHE; 
-        regs[HR_DIN1_ID+3]=ESCENA0*HIGH + NOCHE*HIGH;  
+        regs[HR_DIN6_ID]=2012; 
+        regs[HR_DIN6_ID+1]=INTERRUPTOR*TIPO + DIN6; 
+        regs[HR_DIN6_ID+2]=ESCENA0+NOCHE; 
+        regs[HR_DIN6_ID+3]=ESCENA0*HIGH + NOCHE*HIGH;  
        regs[HR_RELE2_ID+3]=memoria;//QUITAR 
 }
 
@@ -121,18 +130,17 @@ void Actualizar_Entradas()
   //He considerado que la escena 0 (LSB de valor de escena) es la que leo o escribo
    int pin;
    int HR_valorEscena;
-  for (pin=DIN1; pin <= DIN3; pin++){
+  for (pin=DIN1; pin <= AINAUX; pin++){
+    HR_valorEscena=HR_INFO+(pin-2)*5+3;
     //en la fórmula pone (pin-2)porque DIN1=2, el 5 (cada elemento digital usa (5*2)=10 bytes)
     //y es la posición tercera la del valor, considero la escena 0 la que hay que sacar
     //CON SWITCH NO ME FUNCIONA COMO QUIERO    
-    if (pin==DIN1 || pin==DIN2 || pin==DIN3){ //entradas digitales
-           HR_valorEscena=HR_INFO+(pin-2)*5+3;
-           regs[HR_valorEscena]=(regs[HR_valorEscena]&0xFFFE)|digitalRead(pin);
-           }  
-//ME FALTA LO DE LAS ENTRADAS ANALOGICAS           
-//    if(pin==POTIN || pin==AINAUX)analogRead(pin); //entradas analógicas
-
-             
+    if (pin==DIN1 || pin==DIN2 || pin==DIN3 || pin==DIN4 || pin==DIN5 || pin==DIN6 
+       || pin==SWIN0 || pin==SWIN1 || pin==SWIN2 || pin==SWIN3 ) //entradas digitales
+       regs[HR_valorEscena]=(regs[HR_valorEscena]&0xFFFE)|digitalRead(pin);
+    
+    if(pin==POTIN)  regs[HR_POTIN_ID+3]=  analogRead(pin);//entradas analógicas
+    if(pin==AINAUX) regs[HR_AINAUX_ID+3]= analogRead(pin);//entradas analógicas
   }
 }
 
@@ -144,7 +152,7 @@ void ProcesarNormal()
 {
   //este es un sencillo ejemplo para probar el funcionamiento de lo escrito hasta ahora
   //sólo utilizo RELÉ1, RELÉ2 Y DIN6
-  regs[HR_RELE1_ID+3]=(regs[HR_RELE1_ID+3]&0xFFFE)|regs[HR_DIN1_ID+3]; //depende de la entrada DIN6
+  regs[HR_RELE1_ID+3]=(regs[HR_RELE1_ID+3]&0xFFFE) | (regs[HR_DIN6_ID+3]&0x1); //depende de la entrada DIN6
   //regs[HR_RELE2_ID+3]=memoria; // la enciendo siempre esto es para las pruebas
   
   
@@ -160,18 +168,21 @@ void ProcesarNormal()
 */
 void Actualizar_Salidas()
 {
+  //Esto habrá que modificarlo para cada módulo
+  //He considerado que la escena 0 (LSB de valor de escena) es la que leo o escribo
   int HR_valorEscena;
-  byte pin;
-  for (pin=RELE1; pin <= RELE8; pin++){
-      if (pin==RELE1 || pin==RELE2 || pin==RELE3 || pin==RELE4 ||
-        pin==RELE5 || pin==RELE6 || pin==RELE7 || pin==RELE8){
-          HR_valorEscena=HR_INFO+(pin-2)*5+3;
-          digitalWrite(pin,regs[HR_valorEscena]&0x0001); 
-          }
+  int pin;
+  for (pin=RELE1; pin <= RELE4; pin++){
+    HR_valorEscena=HR_INFO+(pin-2)*5+3;
+    //en la fórmula pone (pin-2)porque DIN1=2, el 5 (cada elemento digital usa (5*2)=10 bytes)
+    //y es la posición tercera la del valor, considero la escena 0 la que hay que sacar
+    //para RELE1 sería 10+(8-2)*5+3 =43 que es la dirección del valor de escena del RELE1
+    if (pin==RELE1 || pin==RELE2 || pin==RELE3 || pin==RELE4)
+       digitalWrite(pin,regs[HR_valorEscena]&0x0001); //No consigo que me funcione como quiero con un switch
     }
 }
 
-#include "ComandosWK0100.h"
+#include "ComandosWK0400.h"
 
 /*ProcesarComando*****************************************************************************OK
 *Si desde el inicio de la ejecución del loop() se ha recibido alguna orden desde el maestro WK0500
@@ -237,7 +248,5 @@ void ProcesarComando()
 
 
 
-/*Para disminuir el tamaño del fichero fuente he optado por colocar este include
-*LO DE ESPECIFICAR EL SUBDIRECTORIO ES PORQUE LO LLEVO EN LA MEMORIA USB 
-*Y COMO TRABAJO EN VARIOS SITIOS, ASI VA SIEMPRE CONMIGO     */
+/*Para disminuir el tamaño del fichero fuente he optado por colocar este include*/
 #include "ModBusSlave.h"

@@ -15,7 +15,7 @@
  *************************************************************************/
 #include <EEPROM.h>  //para las operaciones de lectura y escritura en la EEPROM
 //al final tengo otro #include para las librerias ModBus Slave
-#include "G:\PVKINN\MODBUSwk0300\HRWK0300.h"
+#include "HRWK0300.h"
 
 #define DirDefectoMB 18 //uso define en lugar de const para ahorrar espacio en cualquier sitio
 unsigned char DirMB =1;// EEPROM.read (EP_DirMB);//DE MOMENTO LA DIRECCIÓN VALE 1
@@ -162,7 +162,7 @@ void Actualizar_Salidas()
     }
 }
 
-#include "G:\PVKINN\MODBUSwk0300\ComandosWK0300.h"
+#include "ComandosWK0300.h"
 
 /*ProcesarComando*****************************************************************************OK
 *Si desde el inicio de la ejecución del loop() se ha recibido alguna orden desde el maestro WK0500
@@ -231,4 +231,4 @@ void ProcesarComando()
 /*Para disminuir el tamaño del fichero fuente he optado por colocar este include
 *LO DE ESPECIFICAR EL SUBDIRECTORIO ES PORQUE LO LLEVO EN LA MEMORIA USB 
 *Y COMO TRABAJO EN VARIOS SITIOS, ASI VA SIEMPRE CONMIGO     */
-#include "G:\PVKINN\MODBUSwk0300\ModBusSlave.h"
+#include "ModBusSlave.h"
