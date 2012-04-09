@@ -50,9 +50,9 @@ enum {
 byte buscarElemento(int id_elemento)
 {
 int p;  
-for(p = HR_INFO ;  p <= HR_POTIN_ID ; p += 5) //la entrada anal�gica auxiliar la analizo por separado
+for(p = HR_INFO ;  p <= HR_DIN3_ID ; p += 5) //la entrada anal�gica auxiliar la analizo por separado
    if(regs[p] == id_elemento)return p; // si lo encuentra devuelve posici�n
-   if(regs[HR_AINAUX_ID] == id_elemento) return HR_AINAUX_ID;//esto es porque los elementos analógicos usan más bytes
+
    return 0;//NO lo ha encontrado
 }  
 
@@ -64,23 +64,21 @@ void ComandoError(){
 //--------------------------------------------------
 void ActivarElemento(){
 //Serial.print("ACTIVAR ELEMENTO: ");
-memoria=HIGH;
-/*
+
 posicion=buscarElemento(regs[HR_ARG1]);
 //en regs[HR_ARG1] est�n los 2 bytes de Id_elemento
 if(posicion==HR_RELE1_ID || posicion==HR_RELE2_ID || posicion==HR_RELE3_ID || posicion==HR_RELE4_ID)
     regs[posicion + OFFSET_VESC] |=1;//ponemos un 1 en la escena cero(dejando los otros valores de escena) que es la que se activar� al final
       
-  */    
+ 
 }
 //--------------------------------------------------
 void DesactivarElemento(){
 //Serial.print("DESACTIVAR ELEMENTO: ");
-/*posicion=buscarElemento(regs[HR_ARG1]);
+posicion=buscarElemento(regs[HR_ARG1]);
 //en regs[HR_ARG1] est�n los 2 bytes de Id_elemento
 if(posicion==HR_RELE1_ID || posicion==HR_RELE2_ID || posicion==HR_RELE3_ID || posicion==HR_RELE4_ID)
-      regs[posicion + OFFSET_VESC] &=0xFFFE;//ponemos un 0 en la escena cero(dejando los otros valores de escena) que es la que se activar� al final*/
-      memoria=LOW;
+      regs[posicion + OFFSET_VESC] &=0xFFFE;//ponemos un 0 en la escena cero(dejando los otros valores de escena) que es la que se activar� al final
 }
 //--------------------------------------------------
 void ActivarGrupo(){
@@ -168,63 +166,4 @@ void BorradoTotalCerradura(){
 //Serial.print("BORRADO TOTAL DE CERRADURA");
 }
 //--------------------------------------------------
-//NO QUEDA CLARO EL N� DE BYTES PARA CODIFICAR TERMOSTATO Y CONSIGNA
-void LeerTemperatura(){
-//Serial.print("LEER TEMPERATURA");
-}
-//--------------------------------------------------
-void ModificarConsignaActual(){
-//Serial.print("MODIFICAR CONSIGNA ACTUAL");
-}
-//--------------------------------------------------
-void ModificarConsignaModoDia(){
-//Serial.print("MODIFICAR CONSIGNA DEL MODO DIA");
-}
-//--------------------------------------------------
-void ModificarConsignaModoNoche(){
-//Serial.print("MODIFICAR CONSIGNA DEL MODO NOCHE");
-}
-//--------------------------------------------------
-void ModificarConsignaModoActualGlobalmente(){
-//Serial.print("MODIFICAR CONSIGNA ACTUAL GLOBALMENTE");
-}
-//--------------------------------------------------
-void ModificarConsignaModoDiaGlobalmente(){
-//Serial.print("MODIFICAR CONSIGNA DEL MODO DIA GLOBALMENTE");
-}
-//--------------------------------------------------
-void ModificarConsignaModoNocheGlobalmente(){
-//Serial.print("MODIFICAR CONSIGNA DEL MODO NOCHE GLOBALMENTE");
-}
-//--------------------------------------------------
-void ActivarHVAC(){
-//Serial.print("ACTIVAR HVAC ");
-}
-//--------------------------------------------------
-void DesactivarHVAC(){
-//Serial.print("DESACTIVAR HVAC ");
-}
-//--------------------------------------------------
-void ActivarHVACGlobalmente(){
-//Serial.print("ACTIVAR HVAC GLOBALMENTE ");
-}
-//--------------------------------------------------
-void DesactivarHVACGlobalmente(){
-//Serial.print("DESACTIVAR HVAC GLOBALMENTE ");
-}
-//--------------------------------------------------
-void ModificarLimiteTemperaturaSuperior(){
-//Serial.print("MODIFICAR LIMITE TEMPERATURA SUPERIOR  ");
-}
-//--------------------------------------------------
-void ModificarLimiteTemperaturaInferior(){
-//Serial.print("MODIFICAR LIMITE TEMPERATURA INFERIOR  ");
-}
-//--------------------------------------------------
-void ModificarLimiteTemperaturaSuperiorGlobalmente(){
-//Serial.print("MODIFICAR LIMITE TEMPERATURA SUPERIOR GLOBALMENTE ");
-}
-//--------------------------------------------------
-void ModificarLimiteTemperaturaInferiorGlobalmente(){
-//Serial.print("MODIFICAR LIMITE TEMPERATURA INFERIOR GLOBALMENTE ");
-}
+
